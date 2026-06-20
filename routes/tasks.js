@@ -1,25 +1,12 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const tasksController = require('../controllers/tasksController');
+const { protect } = require('../middleware/auth');
 
-// Placeholders — real logic comes once the controller is built
-router.get('/', (req, res) => {
-    res.json({ message: 'get all tasks - not built yet' });
-});
-
-router.get('/:id', (req, res) => {
-    res.json({ message: `get task ${req.params.id} - not built yet` });
-});
-
-router.post('/', (req, res) => {
-    res.json({ message: 'create task - not built yet' });
-});
-
-router.patch('/:id', (req, res) => {
-    res.json({ message: `update task ${req.params.id} - not built yet` });
-});
-
-router.delete('/:id', (req, res) => {
-    res.json({ message: `delete task ${req.params.id} - not built yet` });
-});
+router.get('/',     protect, tasksController.getAll);
+router.get('/:id',  protect, tasksController.getOne);
+router.post('/',    protect, tasksController.create);
+router.patch('/:id',protect, tasksController.update);
+router.delete('/:id', protect, tasksController.remove);
 
 module.exports = router;
