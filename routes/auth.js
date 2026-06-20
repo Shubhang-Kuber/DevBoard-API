@@ -1,14 +1,10 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const authController = require('../controllers/authController');
+const { protect } = require('../middleware/auth');
 
-// We haven't built the controller yet, so this is a placeholder
-// just to get the server running without crashing.
-router.post('/register', (req, res) => {
-    res.json({ message: 'register endpoint - not built yet' });
-});
-
-router.post('/login', (req, res) => {
-    res.json({ message: 'login endpoint - not built yet' });
-});
+router.post('/register', authController.register);
+router.post('/login',    authController.login);
+router.get('/me',        protect, authController.me);
 
 module.exports = router;
