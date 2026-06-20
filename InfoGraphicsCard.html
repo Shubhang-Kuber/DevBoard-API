@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Anatomy of a REST API — Scientific Cutaway</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --cream:#fdf8f0;
+    --paper:#f7f1e3;
+    --warm-white:#fefcf7;
+    --ink:#1a1208;
+    --ink-light:#3d2f1a;
+    --ink-muted:#7a6a52;
+    --rule:#d4c5a9;
+    --rule-light:#ede4d3;
+    --accent-blue:#2563eb;
+    --accent-indigo:#4f46e5;
+    --accent-purple:#7c3aed;
+    --accent-green:#059669;
+    --accent-amber:#d97706;
+    --accent-red:#dc2626;
+    --accent-teal:#0891b2;
+    --glow-blue:#60a5fa;
+    --chassis-bg:#e8dfc8;
+    --chassis-border:#b8a88a;
+    --section-bg:#f0e8d4;
+  }
+
+  body{
+    background:var(--cream);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:40px 20px;
+  }
+
+  /* ══════════════════════════════════════
+     MAIN SHEET
+  ══════════════════════════════════════ */
+  .sheet{
+    width:1100px;
+    background:var(--warm-white);
+    border:2px solid var(--chassis-border);
+    border-radius:4px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 8px var(--warm-white), inset 0 0 0 10px var(--rule-light);
+    padding:48px 52px 44px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* decorative corner marks */
+  .sheet::before,.sheet::after{
+    content:'';
+    position:absolute;
+    width:20px;height:20px;
+    border-color:var(--chassis-border);
+    border-style:solid;
+  }
+  .sheet::before{top:18px;left:18px;border-width:2px 0 0 2px;}
+  .sheet::after{bottom:18px;right:18px;border-width:0 2px 2px 0;}
+
+  /* ══ HEADER ══ */
+  .header{
+    text-align:center;
+    border-bottom:3px double var(--chassis-border);
+    padding-bottom:20px;
+    margin-bottom:28px;
+    position:relative;
+  }
+
+  .header-kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+    margin-bottom:8px;
+  }
+
+  .header-title{
+    font-family:'Playfair Display',serif;
+    font-size:34px;
+    font-weight:900;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+    line-height:1.1;
+  }
+
+  .header-title em{
+    font-style:italic;
+    color:var(--accent-indigo);
+  }
+
+  .header-sub{
+    font-size:13px;
+    color:var(--ink-muted);
+    margin-top:8px;
+    font-weight:400;
+    letter-spacing:0.01em;
+  }
+
+  .header-sub strong{
+    color:var(--ink-light);
+    font-weight:600;
+  }
+
+  /* ══ TOP ROW ══ */
+  .top-row{
+    display:grid;
+    grid-template-columns:210px 1fr 210px;
+    gap:20px;
+    margin-bottom:22px;
+    align-items:start;
+  }
+
+  /* ══ CHASSIS ══ */
+  .chassis-wrap{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+  }
+
+  .chassis{
+    width:100%;
+    background:var(--chassis-bg);
+    border:2.5px solid var(--chassis-border);
+    border-radius:8px;
+    overflow:hidden;
+    position:relative;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  /* chassis top label strip */
+  .chassis-label{
+    background:var(--chassis-border);
+    text-align:center;
+    padding:5px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--warm-white);
+    font-weight:500;
+  }
+
+  /* request entry */
+  .request-entry{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 16px 6px;
+    gap:8px;
+    border-bottom:1px dashed var(--chassis-border);
+  }
+
+  .req-badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    font-weight:500;
+    padding:3px 8px;
+    border-radius:4px;
+    background:var(--accent-indigo);
+    color:#fff;
+    letter-spacing:0.05em;
+  }
+
+  .req-path{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ink-muted);
+  }
+
+  /* compartments */
+  .compartment{
+    border-bottom:1.5px solid var(--chassis-border);
+    padding:0;
+    position:relative;
+    background:var(--section-bg);
+  }
+
+  .compartment:last-of-type{border-bottom:none;}
+
+  .comp-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px 5px;
+    background:rgba(0,0,0,0.04);
+    border-bottom:1px solid var(--chassis-border);
+  }
+
+  .comp-num{
+    width:18px;height:18px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:700;
+    color:#fff;
+    flex-shrink:0;
+  }
+
+  .comp-title{
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--ink-light);
+  }
+
+  .comp-body{
+    padding:8px 12px 10px;
+    font-size:10.5px;
+    color:var(--ink-light);
+    line-height:1.55;
+  }
+
+  .comp-body code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    background:rgba(0,0,0,0.07);
+    padding:1px 4px;
+    border-radius:3px;
+    color:var(--ink);
+  }
+
+  /* pulse animation inside chassis */
+  .pulse-line{
+    display:flex;
+    align-items:center;
+    padding:4px 12px 0;
+    gap:4px;
+  }
+
+  .pulse-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--glow-blue);
+    box-shadow:0 0 6px var(--glow-blue);
+    animation:pulse-anim 2s ease-in-out infinite;
+    flex-shrink:0;
+  }
+
+  .pulse-track{
+    flex:1;
+    height:2px;
+    background:linear-gradient(90deg, var(--glow-blue), transparent);
+    border-radius:2px;
+    opacity:0.5;
+  }
+
+  @keyframes pulse-anim{
+    0%,100%{opacity:0.4;transform:scale(1);}
+    50%{opacity:1;transform:scale(1.35);}
+  }
+
+  /* ══ CALLOUT BOXES (side panels) ══ */
+  .callout{
+    background:var(--warm-white);
+    border:1.5px solid var(--chassis-border);
+    border-radius:6px;
+    padding:14px 15px 13px;
+    position:relative;
+    font-size:11.5px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .callout-title{
+    font-family:'Playfair Display',serif;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:7px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    line-height:1.2;
+  }
+
+  .callout-icon{
+    width:22px;height:22px;
+    border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;
+    flex-shrink:0;
+  }
+
+  .callout p{
+    color:var(--ink-light);
+    line-height:1.55;
+    font-size:11px;
+    margin-bottom:7px;
+  }
+
+  .callout p:last-child{margin-bottom:0;}
+
+  .callout ul{
+    padding-left:14px;
+    color:var(--ink-muted);
+    font-size:11px;
+    line-height:1.6;
+  }
+
+  .callout ul li{margin-bottom:2px;}
+
+  .callout code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    background:var(--section-bg);
+    padding:1px 4px;
+    border-radius:3px;
+    color:var(--ink);
+    border:1px solid var(--rule);
+  }
+
+  /* colored accent stripe */
+  .callout.blue  {border-color:#93c5fd; border-left-width:4px;}
+  .callout.purple{border-color:#c4b5fd; border-left-width:4px;}
+  .callout.green {border-color:#6ee7b7; border-left-width:4px;}
+  .callout.amber {border-color:#fcd34d; border-left-width:4px;}
+  .callout.teal  {border-color:#67e8f9; border-left-width:4px;}
+  .callout.red   {border-color:#fca5a5; border-left-width:4px;}
+
+  /* label number badge */
+  .callout-num{
+    position:absolute;
+    top:-10px; right:12px;
+    width:20px;height:20px;
+    border-radius:50%;
+    font-size:9.5px;
+    font-weight:700;
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--warm-white);
+  }
+
+  /* connector arrow labels */
+  .arrow-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:var(--accent-indigo);
+    letter-spacing:0.08em;
+  }
+
+  /* ══ CONNECTOR LINES via SVG overlay ══ */
+  .connector-layer{
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    pointer-events:none;
+    z-index:1;
+  }
+
+  /* ══ MIDDLE ROW ══ */
+  .mid-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-bottom:18px;
+  }
+
+  /* ══ DATABASE DIAGRAM ══ */
+  .db-diagram{
+    background:var(--warm-white);
+    border:1.5px solid var(--chassis-border);
+    border-left:4px solid var(--glow-blue);
+    border-radius:6px;
+    padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .db-diagram .callout-title{margin-bottom:10px;}
+
+  .schema{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .schema-row{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+  }
+
+  .table-box{
+    background:var(--section-bg);
+    border:1.5px solid var(--chassis-border);
+    border-radius:5px;
+    padding:4px 8px;
+    font-weight:500;
+  }
+
+  .table-box.primary{
+    border-color:#93c5fd;
+    color:var(--accent-blue);
+    background:rgba(59,130,246,0.07);
+  }
+
+  .table-box.junction{
+    border-color:#d4b9fa;
+    color:var(--accent-purple);
+    background:rgba(124,58,237,0.07);
+    font-size:9.5px;
+  }
+
+  .table-box.shared{
+    border-color:#6ee7b7;
+    color:var(--accent-green);
+    background:rgba(5,150,105,0.07);
+  }
+
+  .schema-sym{
+    color:var(--ink-muted);
+    font-size:11px;
+  }
+
+  .schema-note{
+    font-family:'Inter',sans-serif;
+    font-size:10.5px;
+    color:var(--ink-muted);
+    margin-top:8px;
+    line-height:1.5;
+    border-top:1px dashed var(--rule);
+    padding-top:7px;
+  }
+
+  /* ══ TRADE-OFFS BOX ══ */
+  .tradeoffs{
+    background:linear-gradient(135deg, #fef9ec 0%, #fdf3d5 100%);
+    border:1.5px solid #fcd34d;
+    border-left:4px solid var(--accent-amber);
+    border-radius:6px;
+    padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .tradeoffs .callout-title{color:var(--accent-amber);}
+
+  .tradeoff-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:6px;
+  }
+
+  .tradeoff-item{
+    background:rgba(255,255,255,0.7);
+    border:1px solid #fde68a;
+    border-radius:5px;
+    padding:7px 9px;
+  }
+
+  .tradeoff-item h4{
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:3px;
+    display:flex;align-items:center;gap:5px;
+  }
+
+  .tradeoff-item p{
+    font-size:10.5px;
+    color:var(--ink-muted);
+    line-height:1.5;
+    margin-bottom:0;
+  }
+
+  /* ══ HTTP REFERENCE TABLE ══ */
+  .ref-table-wrap{
+    border:1.5px solid var(--chassis-border);
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .ref-table-header{
+    background:var(--chassis-border);
+    padding:8px 16px;
+    font-family:'Playfair Display',serif;
+    font-size:13px;
+    font-weight:700;
+    color:var(--warm-white);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  table.ref{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+    background:var(--warm-white);
+  }
+
+  table.ref thead th{
+    background:var(--section-bg);
+    padding:7px 12px;
+    text-align:left;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+    border-bottom:1.5px solid var(--rule);
+  }
+
+  table.ref tbody tr{
+    border-bottom:1px solid var(--rule-light);
+  }
+
+  table.ref tbody tr:last-child{border-bottom:none;}
+
+  table.ref tbody tr:hover{background:var(--section-bg);}
+
+  table.ref td{
+    padding:8px 12px;
+    color:var(--ink-light);
+    vertical-align:middle;
+  }
+
+  .method-pill{
+    display:inline-block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    font-weight:500;
+    padding:3px 8px;
+    border-radius:4px;
+    color:#fff;
+    letter-spacing:0.04em;
+  }
+
+  .method-get    {background:#059669;}
+  .method-post   {background:#2563eb;}
+  .method-patch  {background:#d97706;}
+  .method-put    {background:#7c3aed;}
+  .method-delete {background:#dc2626;}
+
+  .idempotent-badge{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:3px;
+    border:1px solid var(--rule);
+    color:var(--ink-muted);
+    font-family:'JetBrains Mono',monospace;
+    white-space:nowrap;
+  }
+
+  /* ══ FOOTER ══ */
+  .footer{
+    margin-top:20px;
+    padding-top:14px;
+    border-top:2px double var(--chassis-border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .footer-left{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    color:var(--ink-muted);
+    letter-spacing:0.08em;
+  }
+
+  .footer-right{
+    font-family:'Playfair Display',serif;
+    font-size:11px;
+    color:var(--ink-muted);
+    font-style:italic;
+  }
+
+  /* ══ MISC ══ */
+  .label-dot{
+    display:inline-block;
+    width:8px;height:8px;
+    border-radius:50%;
+    margin-right:4px;
+    vertical-align:middle;
+  }
+
+  .section-rule{
+    border:none;
+    border-top:1px dashed var(--rule);
+    margin:10px 0;
+  }
+
+  /* flow arrows in chassis */
+  .flow-arrow-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:3px 0;
+    font-size:14px;
+    color:var(--ink-muted);
+  }
+
+  .flow-arrow-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:8.5px;
+    color:var(--ink-muted);
+    margin-left:6px;
+    letter-spacing:0.05em;
+  }
+
+  /* response return path */
+  .return-strip{
+    background:rgba(5,150,105,0.08);
+    border:1px dashed #6ee7b7;
+    border-radius:4px;
+    margin:6px 12px 8px;
+    padding:5px 10px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .return-strip span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:var(--accent-green);
+  }
+
+  .return-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent-green);
+    box-shadow:0 0 5px var(--accent-green);
+    animation:pulse-anim 2.4s 0.6s ease-in-out infinite;
+    flex-shrink:0;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ══ HEADER ══ -->
+  <div class="header">
+    <div class="header-kicker">Technical Reference · DevBoard API · Node.js / Express 5 / SQLite</div>
+    <div class="header-title">ANATOMY OF A <em>REST API</em>: A SCIENTIFIC CUTAWAY</div>
+    <div class="header-sub">
+      How an HTTP request travels through <strong>DevBoard API</strong> — from client to database and back,
+      layer by layer, with every mechanism exposed.
+    </div>
+  </div>
+
+  <!-- ══ TOP ROW: Left callouts | Chassis | Right callouts ══ -->
+  <div class="top-row">
+
+    <!-- LEFT CALLOUTS -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Callout A: Authentication Layer -->
+      <div class="callout blue">
+        <div class="callout-num" style="background:var(--accent-blue);">A</div>
+        <div class="callout-title">
+          <div class="callout-icon" style="background:rgba(37,99,235,0.1);">🔐</div>
+          Authentication Layer
+        </div>
+        <p>Two-step identity system separating how passwords are <em>stored</em> from how sessions are <em>proven</em>.</p>
+        <p><strong>bcrypt (registration):</strong> Applies a one-way hash with a cost factor, so even if the database leaks, passwords cannot be reversed. The salt is embedded in the hash string.</p>
+        <p><strong>JWT (every request):</strong> The server signs a JSON payload with a secret key. The client stores this token and sends it in <code>Authorization: Bearer &lt;token&gt;</code>. The server re-verifies the signature — no session table needed.</p>
+        <ul>
+          <li>Stateless — no server-side session store</li>
+          <li>Token contains <code>userId</code> as payload</li>
+          <li>Expiry enforced on every decode</li>
+        </ul>
+      </div>
+
+      <!-- Callout B: Middleware Chain -->
+      <div class="callout purple">
+        <div class="callout-num" style="background:var(--accent-purple);">B</div>
+        <div class="callout-title">
+          <div class="callout-icon" style="background:rgba(124,58,237,0.1);">⛓</div>
+          Middleware Chain
+        </div>
+        <p>Express processes each request through a pipeline of functions. Each calls <code>next()</code> to pass control forward, or throws to the error handler.</p>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-muted);line-height:1.8;background:var(--section-bg);border:1px solid var(--rule);border-radius:4px;padding:6px 8px;">
+          json() → cors() → auth.js<br>
+          → router → controller<br>
+          → errorHandler()
+        </p>
+        <ul>
+          <li><code>auth.js</code> — verifies JWT, attaches <code>req.user</code></li>
+          <li>Global error handler catches anything thrown in the chain</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════ CHASSIS ════════════════════════ -->
+    <div class="chassis-wrap">
+      <div class="chassis">
+
+        <div class="chassis-label">SERVER CHASSIS — Request Lifecycle</div>
+
+        <!-- Incoming request -->
+        <div class="request-entry">
+          <div class="req-badge">POST</div>
+          <div class="req-path">/api/tasks &nbsp;·&nbsp; Authorization: Bearer ey…</div>
+          <div class="pulse-dot" style="margin-left:auto;"></div>
+        </div>
+
+        <!-- Layer 1: Express + JSON parse -->
+        <div class="compartment">
+          <div class="comp-header">
+            <div class="comp-num" style="background:#6366f1;">1</div>
+            <div class="comp-title" style="color:#4f46e5;">Express 5 · Global Middleware</div>
+          </div>
+          <div class="comp-body">
+            <code>express.json()</code> parses the body buffer into <code>req.body</code>.
+            Malformed JSON triggers the error handler before routing even runs.
+          </div>
+          <div class="pulse-line"><div class="pulse-dot"></div><div class="pulse-track"></div></div>
+        </div>
+
+        <div class="flow-arrow-row">▼ <span class="flow-arrow-label">passes to router</span></div>
+
+        <!-- Layer 2: Route matching -->
+        <div class="compartment">
+          <div class="comp-header">
+            <div class="comp-num" style="background:#2563eb;">2</div>
+            <div class="comp-title" style="color:#1d4ed8;">Router · URL → Handler Map</div>
+          </div>
+          <div class="comp-body">
+            <code>routes/tasks.js</code> matches the URL pattern and HTTP verb, then
+            invokes the JWT middleware before handing off to the controller. Unknown routes fall through to a 404 handler.
+          </div>
+          <div class="pulse-line"><div class="pulse-dot"></div><div class="pulse-track"></div></div>
+        </div>
+
+        <div class="flow-arrow-row">▼ <span class="flow-arrow-label">if token valid</span></div>
+
+        <!-- Layer 3: Auth middleware -->
+        <div class="compartment">
+          <div class="comp-header">
+            <div class="comp-num" style="background:#7c3aed;">3</div>
+            <div class="comp-title" style="color:#6d28d9;">Auth Middleware · JWT Verify</div>
+          </div>
+          <div class="comp-body">
+            Extracts and verifies the Bearer token. On success, attaches <code>req.user.id</code>
+            for downstream use. On failure, throws <code>401 Unauthorized</code> — the request
+            never reaches the controller.
+          </div>
+          <div class="pulse-line"><div class="pulse-dot"></div><div class="pulse-track"></div></div>
+        </div>
+
+        <div class="flow-arrow-row">▼ <span class="flow-arrow-label">ownership check</span></div>
+
+        <!-- Layer 4: Controller + DB -->
+        <div class="compartment">
+          <div class="comp-header">
+            <div class="comp-num" style="background:#059669;">4</div>
+            <div class="comp-title" style="color:#047857;">Controller · Business Logic + SQL</div>
+          </div>
+          <div class="comp-body">
+            Reads <code>req.body</code> and <code>req.user.id</code>, runs a parameterized SQL query
+            scoped to that user, then builds the JSON response.
+            Every <code>INSERT</code> / <code>SELECT</code> carries a <code>WHERE user_id = ?</code> guard.
+          </div>
+          <div class="pulse-line"><div class="pulse-dot"></div><div class="pulse-track"></div></div>
+        </div>
+
+        <div class="flow-arrow-row">▼ <span class="flow-arrow-label">parameterized query</span></div>
+
+        <!-- Layer 5: SQLite -->
+        <div class="compartment">
+          <div class="comp-header">
+            <div class="comp-num" style="background:#0891b2;">5</div>
+            <div class="comp-title" style="color:#0e7490;">SQLite Database · Persistent Store</div>
+          </div>
+          <div class="comp-body">
+            File-based, single-writer, zero-config. Schema bootstrapped on first start.
+            Four tables: <code>users</code>, <code>tasks</code>, <code>bookmarks</code>, <code>tags</code> +
+            two junction tables for the many-to-many tag relationship.
+          </div>
+        </div>
+
+        <!-- Return path -->
+        <div class="return-strip">
+          <div class="return-dot"></div>
+          <span>◀── JSON response flows back up the chain ── 201 Created {"id":42, …}</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT CALLOUTS -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Callout C: Ownership -->
+      <div class="callout green">
+        <div class="callout-num" style="background:var(--accent-green);">C</div>
+        <div class="callout-title">
+          <div class="callout-icon" style="background:rgba(5,150,105,0.1);">🛡️</div>
+          Ownership Authorization
+        </div>
+        <p>Authorization ≠ Authentication. Auth confirms <em>who</em> you are; ownership checks confirm <em>what</em> you're allowed to touch.</p>
+        <p>Every query appends <code>AND user_id = ?</code> bound to <code>req.user.id</code>. Even if a user guesses another user's task ID, the SQL returns no rows — the API responds <code>404</code>, not a data leak.</p>
+        <ul>
+          <li>No client-supplied <code>userId</code> is ever trusted</li>
+          <li>Token payload is the only source of identity</li>
+          <li>Prevents IDOR (Insecure Direct Object Reference)</li>
+        </ul>
+      </div>
+
+      <!-- Callout D: Error handling -->
+      <div class="callout red">
+        <div class="callout-num" style="background:var(--accent-red);">D</div>
+        <div class="callout-title">
+          <div class="callout-icon" style="background:rgba(220,38,38,0.1);">⚠️</div>
+          Centralized Error Handling
+        </div>
+        <p>Express's 4-argument error handler <code>(err, req, res, next)</code> is registered last. Any <code>throw</code> anywhere in the chain lands here.</p>
+        <p>Produces a consistent <code>{"error":"…"}</code> envelope instead of stack traces leaking to clients. Status code is carried on the thrown Error object.</p>
+        <ul>
+          <li><code>400</code> — validation failures</li>
+          <li><code>401</code> — missing / invalid token</li>
+          <li><code>403</code> — wrong owner</li>
+          <li><code>404</code> — not found</li>
+          <li><code>500</code> — unexpected server error</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+  <!-- /top-row -->
+
+  <!-- ══ MIDDLE ROW: Database schema | Trade-offs ══ -->
+  <div class="mid-row">
+
+    <!-- Database Schema -->
+    <div class="db-diagram">
+      <div class="callout-title">
+        <div class="callout-icon" style="background:rgba(8,145,178,0.1);width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;">🗄️</div>
+        Database Layer — Many-to-Many Tag Schema
+      </div>
+      <div class="schema">
+        <div class="schema-row">
+          <div class="table-box primary">users</div>
+          <span class="schema-sym">──&lt;</span>
+          <div class="table-box primary">tasks</div>
+          <span class="schema-sym">──&lt;</span>
+          <div class="table-box junction">task_tags</div>
+          <span class="schema-sym">&gt;──</span>
+          <div class="table-box shared">tags</div>
+        </div>
+        <div class="schema-row" style="padding-left:54px;">
+          <div class="table-box primary">bookmarks</div>
+          <span class="schema-sym">──&lt;</span>
+          <div class="table-box junction">bookmark_tags</div>
+          <span class="schema-sym">&gt;──</span>
+          <div class="table-box shared">tags</div>
+        </div>
+      </div>
+      <div class="schema-note">
+        <strong>Why junction tables?</strong> A task can have many tags; a tag can belong to many tasks.
+        A single FK on either table would enforce a one-to-many constraint.
+        Junction tables (<code>task_tags</code>, <code>bookmark_tags</code>) hold only two FK columns —
+        one pointing to the resource, one to the tag — making the many-to-many relationship explicit and queryable.
+        <br><br>
+        <strong>Shared tags:</strong> The same <code>tags</code> table serves both tasks and bookmarks.
+        A tag named "typescript" is one row — both resource types reference it via their own junction table.
+      </div>
+    </div>
+
+    <!-- Trade-offs -->
+    <div class="tradeoffs">
+      <div class="callout-title">
+        <div class="callout-icon" style="background:rgba(217,119,6,0.12);width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;">⚖️</div>
+        Design Trade-offs &amp; Decisions
+      </div>
+      <div class="tradeoff-grid">
+        <div class="tradeoff-item">
+          <h4>🔀 PATCH vs PUT</h4>
+          <p><strong>PATCH</strong> (used here) sends only the changed fields. <strong>PUT</strong> sends the full replacement object — omitting a field deletes it. PATCH is safer for partial updates.</p>
+        </div>
+        <div class="tradeoff-item">
+          <h4>🌐 REST vs GraphQL</h4>
+          <p><strong>REST</strong> maps resources to URLs; each endpoint has a fixed shape. <strong>GraphQL</strong> lets clients request exactly the fields they need — more flexible, more complex to implement.</p>
+        </div>
+        <div class="tradeoff-item">
+          <h4>🗄️ SQLite vs Postgres</h4>
+          <p><strong>SQLite</strong> is file-based, zero-config, single-writer. <strong>Postgres</strong> handles concurrent writes and scales horizontally. SQLite is ideal for learning and single-server apps.</p>
+        </div>
+        <div class="tradeoff-item">
+          <h4>🔑 JWT vs Sessions</h4>
+          <p><strong>JWT</strong> is stateless — no DB lookup per request. <strong>Sessions</strong> are revocable but require server-side storage. JWT trades revocability for simplicity and scalability.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- /mid-row -->
+
+  <!-- ══ HTTP REFERENCE TABLE ══ -->
+  <div class="ref-table-wrap">
+    <div class="ref-table-header">
+      📋 &nbsp;HTTP Method Reference — REST Semantics in DevBoard API
+    </div>
+    <table class="ref">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Operation</th>
+          <th>DevBoard Example</th>
+          <th>Real-world Analogy</th>
+          <th>Body?</th>
+          <th>Idempotent?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method-pill method-get">GET</span></td>
+          <td>Read / Retrieve</td>
+          <td><code style="font-family:'JetBrains Mono',monospace;font-size:10px;">GET /api/tasks</code></td>
+          <td>Opening a folder to see what's inside</td>
+          <td style="text-align:center;">✗</td>
+          <td><span class="idempotent-badge">✓ yes</span></td>
+        </tr>
+        <tr>
+          <td><span class="method-pill method-post">POST</span></td>
+          <td>Create new record</td>
+          <td><code style="font-family:'JetBrains Mono',monospace;font-size:10px;">POST /api/tasks</code></td>
+          <td>Submitting a form — each submit makes a new entry</td>
+          <td style="text-align:center;">✓</td>
+          <td><span class="idempotent-badge" style="border-color:#fca5a5;color:var(--accent-red);">✗ no</span></td>
+        </tr>
+        <tr>
+          <td><span class="method-pill method-patch">PATCH</span></td>
+          <td>Partial update</td>
+          <td><code style="font-family:'JetBrains Mono',monospace;font-size:10px;">PATCH /api/tasks/:id</code></td>
+          <td>Editing a single field in a form without re-entering everything</td>
+          <td style="text-align:center;">✓</td>
+          <td><span class="idempotent-badge">✓ yes</span></td>
+        </tr>
+        <tr>
+          <td><span class="method-pill method-put">PUT</span></td>
+          <td>Full replacement</td>
+          <td><em style="color:var(--ink-muted);font-size:11px;">not used — PATCH preferred</em></td>
+          <td>Tearing out a page and replacing it entirely</td>
+          <td style="text-align:center;">✓</td>
+          <td><span class="idempotent-badge">✓ yes</span></td>
+        </tr>
+        <tr>
+          <td><span class="method-pill method-delete">DELETE</span></td>
+          <td>Remove record</td>
+          <td><code style="font-family:'JetBrains Mono',monospace;font-size:10px;">DELETE /api/bookmarks/:id</code></td>
+          <td>Shredding a document — ownership verified before destruction</td>
+          <td style="text-align:center;">✗</td>
+          <td><span class="idempotent-badge">✓ yes</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <div class="footer">
+    <div class="footer-left">DevBoard API · github.com/Shubhang-Kuber/DevBoard-API · Node.js 18+ · Express 5 · SQLite · JWT · bcrypt</div>
+    <div class="footer-right">"Every request is a round trip through trust." — REST design principle</div>
+  </div>
+
+</div>
+</body>
+</html>
