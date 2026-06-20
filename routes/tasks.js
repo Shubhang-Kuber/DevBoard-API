@@ -8,5 +8,5 @@ router.get('/:id',  protect, tasksController.getOne);
 router.post('/',    protect, tasksController.create);
 router.patch('/:id',protect, tasksController.update);
 router.delete('/:id', protect, tasksController.remove);
-
+router.post('/:id/tags', protect, tasksController.addTag);
 module.exports = router;

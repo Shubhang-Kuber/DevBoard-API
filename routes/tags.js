@@ -1,20 +1,11 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const tagsController = require('../controllers/tagsController');
+const { protect } = require('../middleware/auth');
 
-router.get('/', (req, res) => {
-    res.json({ message: 'get all tags - not built yet' });
-});
-
-router.post('/', (req, res) => {
-    res.json({ message: 'create tag - not built yet' });
-});
-
-router.delete('/:id', (req, res) => {
-    res.json({ message: `delete tag ${req.params.id} - not built yet` });
-});
-
-router.get('/:id/items', (req, res) => {
-    res.json({ message: `get items for tag ${req.params.id} - not built yet` });
-});
+router.get('/',          protect, tagsController.getAll);
+router.post('/',         protect, tagsController.create);
+router.delete('/:id',    protect, tagsController.remove);
+router.get('/:id/items', protect, tagsController.getItems);
 
 module.exports = router;

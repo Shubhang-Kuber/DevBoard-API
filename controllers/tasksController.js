@@ -111,4 +111,37 @@ async function remove(req, res) {
     res.status(204).send();
 }
 
-module.exports = { getAll, getOne, create, update, remove };
+// POST /tasks/:id/tags — attach a tag to a task
+async function addTag(req, res) {
+    const { id } = req.params;       // task id
+    const { tagId } = req.body;      // tag id to attach
+    const db = await getDB();
+
+    // Confirm the task belongs to this user
+    const task = await db.get(
+        'SELECT id FROM tasks WHERE id = ? AND user_id = ?',
+        [id, req.user.userId]
+    );
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Confirm the tag exists
+    const tag = await db.get('SELECT id FROM tags WHERE id = ?', [tagId]);
+    if (!tag) {
+        return res.status(404).json({ error: 'Tag not found' });
+    }
+
+    // Insert into the junction table — this IS the relationship
+    // INSERT OR IGNORE prevents a crash if this pair already exists
+    // (task_tags has a composite PRIMARY KEY of task_id + tag_id)
+    await db.run(
+        'INSERT OR IGNORE INTO task_tags (task_id, tag_id) VALUES (?, ?)',
+        [id, tagId]
+    );
+
+    res.status(201).json({ message: 'Tag attached', taskId: id, tagId });
+}
+
+module.exports = { getAll, getOne, create, update, remove, addTag };
+

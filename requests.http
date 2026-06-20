@@ -20,7 +20,44 @@ Content-Type: application/json
   "status": "in_progress"
 }
 
-
 ### Get all tasks
 GET {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+
+### Create a bookmark
+POST {{baseUrl}}/bookmarks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "MDN - Array methods",
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+  "notes": "reference for map/filter/reduce"
+}
+
+### Get all bookmarks
+GET {{baseUrl}}/bookmarks
+Authorization: Bearer {{token}}
+
+
+### Create a tag
+POST {{baseUrl}}/tags
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "javascript"
+}
+
+### Attach tag to task (replace 1 with your tag's id, and use a real task id)
+POST {{baseUrl}}/tasks/1/tags
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tagId": 1
+}
+
+### Get items for a tag
+GET {{baseUrl}}/tags/1/items
 Authorization: Bearer {{token}}
