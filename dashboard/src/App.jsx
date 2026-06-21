@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from './api';
-import { Auth } from './components/Auth';
+import Landing from './pages/Landing';
 import { Tasks } from './components/Tasks';
 import { Bookmarks } from './components/Bookmarks';
 import { Tags } from './components/Tags';
@@ -82,7 +82,7 @@ export default function App() {
   if (!user) {
     return (
       <>
-        <Auth onAuth={handleAuth} />
+        <Landing onAuth={handleAuth} />
         <ToastStack />
       </>
     );

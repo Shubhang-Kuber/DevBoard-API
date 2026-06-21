@@ -1,4 +1,16 @@
+@import "tailwindcss";
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Override browser autofill background on the landing dark-glass inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 10, 30, 0.92) inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+  transition: background-color 9999s ease 0s;
+}
 
 :root {
   --bg:        #0c0c0d;
